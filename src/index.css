@@ -1,0 +1,487 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Barlow:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Softened Dark Geometric Balance Theme (Modern Slate Gray matching MARKA PRO #0F172A) */
+  --brand-bg: #0f172a;       /* Deep slate matching MARKA PRO background #0F172a */
+  --brand-surface: #1e293b;  /* Beautiful secondary slate */
+  --brand-surface-2: #334155;/* Lighter slate border/input bg */
+  --brand-gold: #7c3aed;     /* Primary brand violet #7C3AED */
+  --brand-gold-hover: #00c2ff;/* Hover state cyan #00C2FF */
+  --brand-gold-tint: rgba(124, 58, 237, 0.16);
+  --brand-text-accent: #00c2ff; /* Accent with beautiful cyan color */
+
+  --brand-coral: #FF5E62;
+  --brand-orange: #FFB347;
+  --brand-purple: #7C3AED;
+  --brand-cyan: #00C2FF;
+
+  --brand-grad-from: #FF5E62;
+  --brand-grad-via: #7C3AED;
+  --brand-grad-to: #00C2FF;
+
+  --z-950: #0f172a;
+  --z-900: #1e293b;
+  --z-850: #334155;
+  --z-800: #334155;
+  --z-750: #475569;
+  --z-700: #475569;
+  --z-500: #94a3b8;
+  --z-400: #cbd5e1;
+  --z-300: #e2e8f0;
+  --z-200: #f1f5f9;
+  --z-100: #f8fafc;
+  
+  --color-white-override: #ffffff;
+  --color-emerald-override: #34d399;
+}
+
+body.light {
+  /* Dynamic Theme: Light Geometric Balance (Crisp White & Deep Indigo/Violet) */
+  --brand-bg: #f8fafc; /* Slate-50 custom background */
+  --brand-surface: #ffffff; /* White card surface */
+  --brand-surface-2: #f1f5f9; /* Slate-100 background */
+  --brand-gold: #7c3aed; /* Violet-600 */
+  --brand-gold-hover: #4338ca;
+  --brand-gold-tint: rgba(124, 58, 237, 0.08);
+  --brand-text-accent: #7c3aed;
+
+  --z-950: #f1f5f9; /* Mapped from bg-zinc-950 */
+  --z-900: #ffffff; /* Mapped from bg-zinc-900 (cards are pure white) */
+  --z-850: #e2e8f0; /* Mapped from bg-zinc-850 */
+  --z-800: #e2e8f0; /* Mapped from bg-zinc-800 */
+  --z-750: #cbd5e1; /* Mapped from bg-zinc-750 */
+  --z-700: #cbd5e1; /* Mapped from bg-zinc-700 */
+  --z-500: #64748b; /* Mapped from text-zinc-500 */
+  --z-400: #475569; /* Mapped from text-zinc-400 */
+  --z-300: #334155; /* Mapped from text-zinc-300 */
+  --z-250: #334155;
+  --z-200: #1e293b; /* Mapped from text-zinc-200 */
+  --z-100: #0f172a; /* Mapped from text-zinc-100 */
+  
+  --color-white-override: #0f172a; /* text-white becomes slate-900 */
+  --color-emerald-override: #059669;
+}
+
+@theme {
+  --font-sans: "Cairo", "Inter", system-ui, sans-serif;
+  --font-mono: "Barlow", "JetBrains Mono", monospace;
+  
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface2: var(--brand-surface-2);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold\/10: var(--brand-gold-tint);
+  --color-brand-gold\/15: rgba(124, 58, 237, 0.15);
+  --color-brand-gold\/20: rgba(124, 58, 237, 0.2);
+  --color-brand-gold\/25: rgba(124, 58, 237, 0.25);
+  --color-brand-gold\/5: rgba(124, 58, 237, 0.05);
+
+  --color-brand-coral: #FF5E62;
+  --color-brand-orange: #FFB347;
+  --color-brand-purple: #7C3AED;
+  --color-brand-cyan: #00C2FF;
+  --color-brand-dark: #0F172A;
+  
+  /* Geometric color mappings for seamless layout transitions */
+  --color-zinc-950: var(--z-950);
+  --color-zinc-900: var(--z-900);
+  --color-zinc-850: var(--z-850);
+  --color-zinc-800: var(--z-800);
+  --color-zinc-750: var(--z-750);
+  --color-zinc-700: var(--z-700);
+  --color-zinc-500: var(--z-500);
+  --color-zinc-400: var(--z-400);
+  --color-zinc-300: var(--z-300);
+  --color-zinc-200: var(--z-200);
+  --color-zinc-100: var(--z-100);
+  
+  /* Adjusting accent elements */
+  --color-amber-600: var(--brand-gold-hover);
+  --color-amber-500: var(--brand-gold);
+}
+
+/* Custom styles for premium appearance */
+html, body {
+  font-family: "Cairo", "Inter", sans-serif;
+  scroll-behavior: smooth;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth active focus glow */
+.focus-ring:focus {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 1px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom scrollbars with geometric theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--brand-gold-tint);
+  border-radius: 9px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-gold);
+}
+
+/* Ensure headings have correct contrast in light mode */
+body.light .text-white,
+body.light h1,
+body.light h2,
+body.light h3,
+body.light h4,
+body.light h5,
+body.light h6 {
+  color: var(--color-white-override);
+}
+
+/* Exempt specific light text on dark assets */
+body.light button.bg-brand-gold,
+body.light button.bg-indigo-600,
+body.light button.bg-brand-gold *,
+body.light button.bg-brand-gold span,
+body.light .bg-indigo-600 *,
+body.light .bg-indigo-600 span,
+body.light .bg-zinc-950 button.bg-brand-gold *,
+body.light .bg-zinc-950 button.bg-brand-gold span {
+  color: #ffffff !important;
+}
+
+/* Ensure sidebar has dark slate contrast in both modes */
+body.light aside {
+  background-color: #0f172a !important; /* Elegant deep Slate 900 as per design */
+  border-left: 1px solid #1e293b !important;
+}
+
+body.light aside h1,
+body.light aside h2,
+body.light aside h3,
+body.light aside p,
+body.light aside div,
+body.light aside span,
+body.light aside nav button {
+  color: #f1f5f9; /* Always show bright colors on the sidebar */
+}
+
+/* Sidebar active navigation item in light mode should be gorgeous indigo tint */
+body.light aside nav button.bg-brand-gold\/10 {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  color: #818cf8 !important;
+  border-color: #6366f1 !important;
+}
+
+/* Preserve original brand logo or upload visual items intact */
+body.light aside select,
+body.light aside input,
+body.light aside textarea {
+  color: #f1f5f9 !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Buttons or badges styling */
+body.light .text-emerald-400 {
+  color: var(--color-emerald-override) !important;
+}
+
+/* Form elements styling in main area */
+body.light main select,
+body.light main input,
+body.light main textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+body.light main select:focus,
+body.light main input:focus,
+body.light main textarea:focus {
+  border-color: var(--brand-gold) !important;
+}
+
+/* Adjust overlay modal contrast */
+body.light .fixed.inset-0 .bg-zinc-900 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+body.light .fixed.inset-0 .bg-zinc-950 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+body.light .fixed.inset-0 h3,
+body.light .fixed.inset-0 label {
+  color: #0f172a !important;
+}
+body.light .fixed.inset-0 .text-zinc-400 {
+  color: #475569 !important;
+}
+body.light .fixed.inset-0 input,
+body.light .fixed.inset-0 select,
+body.light .fixed.inset-0 textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+body.light .fixed.inset-0 input:focus,
+body.light .fixed.inset-0 select:focus,
+body.light .fixed.inset-0 textarea:focus {
+  border-color: var(--brand-gold) !important;
+}
+
+/* Explicit typographic contrast overrides for body.light */
+body.light .text-zinc-400 {
+  color: #556275 !important;
+}
+body.light .text-zinc-300 {
+  color: #1e293b !important;
+}
+body.light .text-zinc-200 {
+  color: #0f172a !important;
+}
+body.light .text-zinc-100 {
+  color: #0c111d !important;
+}
+body.light label {
+  color: #1e293b !important;
+}
+
+/* High-Contrast Input, select, and textarea styles for both themes */
+input[type="text"], 
+input[type="number"], 
+input[type="date"], 
+select, 
+textarea {
+  color: #ffffff !important;
+  background-color: var(--brand-surface, #1e293b) !important;
+  border: 1px solid var(--brand-surface-2, #334155) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="text"]:focus, 
+input[type="number"]:focus, 
+input[type="date"]:focus, 
+select:focus, 
+textarea:focus {
+  border-color: var(--brand-gold, #7c3aed) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2) !important;
+}
+
+/* Keep designated custom text colors readable in dark mode */
+input.text-emerald-400 {
+  color: #34d399 !important;
+}
+input.text-rose-400, .text-rose-400 {
+  color: #f87171 !important;
+}
+input.text-brand-gold, select.text-brand-gold {
+  color: var(--brand-gold, #7c3aed) !important;
+}
+
+/* Light Mode Overrides for Inputs */
+body.light input[type="text"], 
+body.light input[type="number"], 
+body.light input[type="date"], 
+body.light select, 
+body.light textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+body.light input[type="text"]:focus, 
+body.light input[type="number"]:focus, 
+body.light input[type="date"]:focus, 
+body.light select:focus, 
+body.light textarea:focus {
+  border-color: var(--brand-gold) !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2) !important;
+}
+
+body.light input.text-emerald-400 {
+  color: #059669 !important;
+}
+body.light input.text-rose-400, body.light .text-rose-400 {
+  color: #e11d48 !important;
+}
+
+/* Clean Autofill and Autocomplete contrasts */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--brand-surface, #1e293b) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+body.light input:-webkit-autofill,
+body.light input:-webkit-autofill:hover, 
+body.light input:-webkit-autofill:focus,
+body.light input:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+body.light p,
+body.light span:not(.font-mono) {
+  color: #1f2937;
+}
+
+/* Force specific colors in card stats for light mode */
+body.light .bg-zinc-900,
+body.light .bg-zinc-950 {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+body.light .text-zinc-500 {
+  color: #4b5563 !important;
+}
+body.light .bg-zinc-900/60 {
+  background-color: #f9fafb !important;
+}
+body.light .border-zinc-850,
+body.light .border-zinc-800 {
+  border-color: #e5e7eb !important;
+}
+
+/* Light mode overrides for Pricing Calculator sidebar & general elements */
+body.light .divide-zinc-800\/50 span.font-mono.text-white {
+  color: #0f172a !important;
+}
+body.light .divide-zinc-800\/50 span.font-mono.text-zinc-300 {
+  color: #334155 !important;
+}
+body.light .text-zinc-400 {
+  color: #475569 !important;
+}
+body.light .text-emerald-400 {
+  color: #059669 !important;
+}
+body.light .text-brand-gold {
+  color: #b45309 !important; /* Premium high contrast amber gold */
+}
+
+/* Ensure text inside premium gradients remains white in light mode */
+body.light .bg-gradient-to-r span,
+body.light .bg-gradient-to-r div,
+body.light .bg-gradient-to-r p {
+  color: #ffffff !important;
+}
+body.light .bg-gradient-to-r span.text-white\/70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+body.light .bg-gradient-to-r span.text-white\/90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Ensure dark smartphone columns remain fully dark with extremely high-contrast white and cyan text in all theme modes */
+body.light .premium-device-column,
+.premium-device-column {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
+}
+
+body.light .premium-device-column h3,
+body.light .premium-device-column h4,
+body.light .premium-device-column label,
+body.light .premium-device-column p,
+body.light .premium-device-column span,
+body.light .premium-device-column select,
+body.light .premium-device-column input {
+  color: #ffffff !important;
+}
+
+/* Ensure the keypad background container stays dark */
+body.light .premium-device-column .bg-zinc-900\/60,
+.premium-device-column .bg-zinc-900\/60 {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  border-color: #1e293b !important;
+}
+
+/* Force light mode inputs inside smartphone to have a dark background & white text */
+body.light .premium-device-column input,
+body.light .premium-device-column select {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+/* Specifically for inputs and labels that should be secondary gray */
+body.light .premium-device-column label,
+body.light .premium-device-column .text-zinc-400,
+body.light .premium-device-column .text-zinc-500 {
+  color: #94a3b8 !important; /* light slate gray for placeholders/labels */
+}
+
+/* Keep the branding color overrides inside the smartphone column */
+body.light .premium-device-column .text-brand-gold,
+.premium-device-column .text-brand-gold {
+  color: #fbbf24 !important; /* Bring back bright gold inside the device column */
+}
+
+body.light .premium-device-column .text-cyan-400,
+.premium-device-column .text-cyan-400 {
+  color: #00c2ff !important; /* Bring back bright cyan inside the device column */
+}
+
+/* --- PRINT STYLE OVERRIDES --- */
+@media print {
+  /* Hide UI elements with print-hidden or no-print classes */
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Reset background and text for clean printing */
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Make sure our printable invoice sheet occupies container perfectly */
+  #invoice-printable-sheet {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    z-index: 99999 !important;
+  }
+
+  #invoice-printable-sheet * {
+    color: #000000 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Keep the primary gold elements with a high contrast gray or specific accent */
+  #invoice-printable-sheet .text-brand-gold {
+    color: #1a1a1a !important;
+    font-weight: 800 !important;
+  }
+}

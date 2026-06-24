@@ -1,0 +1,6 @@
+{
+  "name": "MARKA PRO",
+  "description": "تطبيق لوحة التحكم، قاعدة البيانات، وحساب التسعيرات الاحترافية بالذكاء الاصطناعي لمصممي الجرافيك بالجزائر.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
