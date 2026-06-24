@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
   LayoutDashboard, 
@@ -311,6 +312,11 @@ export default function App() {
   // Core collections State
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+
+  // PWA and Splash Screen States
+  const [splashActive, setSplashActive] = useState<boolean>(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState<boolean>(false);
   
   // Pricing state cache
   const [calcState, setCalcState] = useState<CalcState>({
@@ -361,6 +367,55 @@ export default function App() {
       }
     }
   }, []);
+
+  // PWA & Splash Screen management
+  useEffect(() => {
+    // Hide splash screen after 1.8 seconds with an extra 400ms buffer for smoother layout transition
+    const timer = setTimeout(() => {
+      setSplashActive(false);
+    }, 1800);
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('[PWA] beforeinstallprompt event captured');
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+      console.log('[PWA] App installed successfully!');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Detect if running in standalone mode (iOS / Android installed PWA)
+    if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
+      setIsAppInstalled(true);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try {
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`[PWA] User choice outcome: ${outcome}`);
+      if (outcome === 'accepted') {
+        setIsAppInstalled(true);
+      }
+    } catch (err) {
+      console.error('[PWA] Failed during installation prompt:', err);
+    }
+    setDeferredPrompt(null);
+  };
 
   // Modal display states
   const [isProjModalOpen, setIsProjModalOpen] = useState(false);
@@ -952,10 +1007,53 @@ export default function App() {
   const isRtl = appLang === 'ar';
 
   return (
-    <div 
-      className={`min-h-screen bg-brand-bg text-zinc-100 flex flex-col ${isRtl ? 'md:flex-row rtl' : 'md:flex-row-reverse ltr'}`} 
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
+    <>
+      {/* PWA Splash Screen */}
+      <AnimatePresence>
+        {splashActive && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0a0a0c] text-white select-none"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6, type: 'spring' }}
+              className="flex flex-col items-center text-center px-4"
+            >
+              <div className="w-24 h-24 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-2xl p-1 mb-6">
+                <img src="/marka_logo_pwa.jpg" alt="Marka Pro" className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
+              </div>
+              
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-grad-from via-brand-grad-via to-brand-grad-to bg-clip-text text-transparent">
+                MARKA PRO V2
+              </h1>
+              <p className="text-xs text-zinc-400 mt-2 font-medium">
+                لوحة وحاسبة تسعير مشاريع التصميم الاحترافية بالجزائر
+              </p>
+
+              <div className="mt-8 flex flex-col items-center gap-2">
+                <div className="h-1 w-32 bg-zinc-900 rounded-full overflow-hidden relative">
+                  <motion.div 
+                    initial={{ left: '-100%' }}
+                    animate={{ left: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                    className="absolute top-0 bottom-0 w-1/2 bg-brand-gold"
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-zinc-500 tracking-wider">جاري تحميل لوحة التحكم الفائقة...</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div 
+        className={`min-h-screen bg-brand-bg text-zinc-100 flex flex-col ${isRtl ? 'md:flex-row rtl' : 'md:flex-row-reverse ltr'}`} 
+        dir={isRtl ? 'rtl' : 'ltr'}
+      >
       {/* SIDEBAR NAVIGATION */}
       <aside className={`w-full md:w-64 bg-zinc-950 ${isRtl ? 'border-l' : 'border-r'} border-zinc-900/80 md:min-h-screen flex flex-col shrink-0 no-print`}>
         {/* Brand logo & tagline */}
@@ -1080,7 +1178,18 @@ export default function App() {
         </nav>
 
         {/* Sidebar Footer context togglers */}
-        <div className="p-4 border-t border-zinc-900/60 bg-zinc-950/60 flex items-center justify-between">
+        <div className="p-4 border-t border-zinc-900/60 bg-zinc-950/60 space-y-2.5">
+          {deferredPrompt && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              className="w-full py-2 bg-gradient-to-r from-[#d4af37] to-amber-500 hover:from-amber-500 hover:to-[#d4af37] text-zinc-950 rounded-lg text-[11px] font-black transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-brand-gold/5"
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>{appLang === 'ar' ? 'تثبيت تطبيق الهاتف 📱' : 'Install PWA App 📱'}</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={toggleTheme}
@@ -1109,6 +1218,17 @@ export default function App() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {deferredPrompt && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-brand-gold to-amber-500 text-zinc-950 rounded-xl text-[10px] font-black transition cursor-pointer shadow-md shadow-brand-gold/10"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-zinc-950" />
+                <span>تثبيت</span>
+              </button>
+            )}
+
             {/* General App & Print Settings Toggle Button */}
             <button
               type="button"
@@ -2119,5 +2239,6 @@ export default function App() {
         </div>
       )}
     </div>
+    </>
   );
 }
