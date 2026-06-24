@@ -207,4 +207,63 @@ export function safeConfirm(msg: string, defaultConfirmed = true): boolean {
   }
 }
 
+/**
+ * Safe wrapper for localStorage.setItem with Try/Catch and logging integration.
+ */
+export function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    console.error(`localStorage.setItem failed for key "${key}":`, e);
+    if ((window as any).logError) {
+      (window as any).logError(
+        'حفظ البيانات (LocalStorage)',
+        `فشل حفظ المفتاح "${key}": قد تكون المساحة ممتلئة.`,
+        e instanceof Error ? e.message : String(e)
+      );
+    }
+    return false;
+  }
+}
+
+/**
+ * Safe wrapper for localStorage.getItem with Try/Catch and logging integration.
+ */
+export function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.error(`localStorage.getItem failed for key "${key}":`, e);
+    if ((window as any).logError) {
+      (window as any).logError(
+        'قراءة البيانات (LocalStorage)',
+        `فشل قراءة المفتاح "${key}": التخزين معطل.`,
+        e instanceof Error ? e.message : String(e)
+      );
+    }
+    return null;
+  }
+}
+
+/**
+ * Safe wrapper for localStorage.removeItem with Try/Catch and logging integration.
+ */
+export function safeRemoveItem(key: string): boolean {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (e) {
+    console.error(`localStorage.removeItem failed for key "${key}":`, e);
+    if ((window as any).logError) {
+      (window as any).logError(
+        'حذف البيانات (LocalStorage)',
+        `فشل حذف المفتاح "${key}".`,
+        e instanceof Error ? e.message : String(e)
+      );
+    }
+    return false;
+  }
+}
+
 

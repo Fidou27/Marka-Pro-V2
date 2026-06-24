@@ -40,7 +40,7 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   
   // Invoice Details
-  const [invoiceNumber, setInvoiceNumber] = useState<string>(`INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>(`INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Date.now().toString().slice(-4)}`);
   const [issueDate, setIssueDate] = useState<string>(new Date().toISOString().substring(0, 10));
   const [dueDate, setDueDate] = useState<string>('');
   
@@ -111,8 +111,8 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
       d.setDate(d.getDate() + 15);
       setDueDate(d.toISOString().substring(0, 10));
 
-      // Generate localized invoice number
-      setInvoiceNumber(`INV-${proj.start?.split('-')[0] || new Date().getFullYear()}-${proj.id.substring(0, 4).toUpperCase()}`);
+      // Generate localized invoice number with unique timestamp suffix
+      setInvoiceNumber(`INV-${proj.start?.split('-')[0] || new Date().getFullYear()}-${proj.id.substring(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`);
     }
   };
 
@@ -159,8 +159,32 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
   const taxAmount = (taxableAmount * taxRate) / 100;
   const totalAmount = taxableAmount + taxAmount;
 
-  // Print invoice helper
+  // Print invoice helper with validation
   const handlePrint = () => {
+    if (!issuerName.trim()) {
+      safeAlert('⚠️ يرجى تعيين اسم المُنفذ/الاستوديو أولاً.');
+      return;
+    }
+    if (!clientName.trim()) {
+      safeAlert('⚠️ يرجى تحديد العميل والمستلم لتوليد الفاتورة بشكل صحيح.');
+      return;
+    }
+    if (!invoiceNumber.trim()) {
+      safeAlert('⚠️ رقم الفاتورة غير صالح أو فارغ.');
+      return;
+    }
+    
+    const invalidItem = items.find(item => !item.description.trim() || item.unitPrice < 0);
+    if (invalidItem) {
+      safeAlert('⚠️ يرجى التأكد من ملء وصف جميع البنود وتحديد سعر صالح أكبر من أو يساوي 0.');
+      return;
+    }
+
+    if (dueDate && new Date(dueDate) < new Date(issueDate)) {
+      safeAlert('⚠️ تنبيه: تاريخ استحقاق الفاتورة يقع قبل تاريخ الإصدار. يرجى مراجعة التواريخ.');
+      return;
+    }
+
     window.print();
   };
 

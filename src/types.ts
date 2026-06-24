@@ -53,3 +53,11 @@ export interface CalcState {
   designs: DesignItem[];
   draft: boolean;
 }
+
+export interface ErrorLog {
+  id: string;
+  timestamp: string;
+  message: string;
+  source: string;
+  details?: string;
+}

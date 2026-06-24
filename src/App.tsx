@@ -27,8 +27,8 @@ import {
   Database
 } from 'lucide-react';
 
-import { Project, Client, CalcState, ProjectStatus } from './types';
-import { safe, safeAlert, safeConfirm } from './utils';
+import { Project, Client, CalcState, ProjectStatus, ErrorLog } from './types';
+import { safe, safeAlert, safeConfirm, safeSetItem, safeGetItem, safeRemoveItem } from './utils';
 
 import Dashboard from './components/Dashboard';
 import Projects from './components/Projects';
@@ -325,6 +325,43 @@ export default function App() {
     draft: false,
   });
 
+  // System error logs states
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [isErrorLogsOpen, setIsErrorLogsOpen] = useState(false);
+
+  // Global logging helper
+  const logError = (source: string, message: string, details?: any) => {
+    const newLog: ErrorLog = {
+      id: 'err_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+      timestamp: new Date().toISOString(),
+      message,
+      source,
+      details: details ? (typeof details === 'object' ? JSON.stringify(details) : String(details)) : undefined,
+    };
+    setErrorLogs((prev) => {
+      const updated = [newLog, ...prev].slice(0, 50);
+      try {
+        localStorage.setItem('marka_error_logs', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save error logs:', e);
+      }
+      return updated;
+    });
+  };
+
+  // Expose logError globally on window so child components can log errors easily
+  useEffect(() => {
+    (window as any).logError = logError;
+    const storedLogs = safeGetItem('marka_error_logs');
+    if (storedLogs) {
+      try {
+        setErrorLogs(JSON.parse(storedLogs));
+      } catch (e) {
+        console.error('Failed to parse error logs:', e);
+      }
+    }
+  }, []);
+
   // Modal display states
   const [isProjModalOpen, setIsProjModalOpen] = useState(false);
   const [isCliModalOpen, setIsCliModalOpen] = useState(false);
@@ -389,19 +426,19 @@ export default function App() {
   // Hydrate states from localStorage on boot
   useEffect(() => {
     try {
-      const storedProj = localStorage.getItem(S_PROJ);
+      const storedProj = safeGetItem(S_PROJ);
       if (storedProj) setProjects(JSON.parse(storedProj));
 
-      const storedCli = localStorage.getItem(S_CLI);
+      const storedCli = safeGetItem(S_CLI);
       if (storedCli) setClients(JSON.parse(storedCli));
 
-      const storedCalc = localStorage.getItem(S_CALC);
+      const storedCalc = safeGetItem(S_CALC);
       if (storedCalc) setCalcState(JSON.parse(storedCalc));
 
-      const storedLogo = localStorage.getItem(S_LOGO);
+      const storedLogo = safeGetItem(S_LOGO);
       if (storedLogo) setUserLogo(storedLogo);
 
-      const storedTheme = localStorage.getItem(S_THEME);
+      const storedTheme = safeGetItem(S_THEME);
       if (storedTheme === 'dark') {
         setTheme('dark');
         document.body.classList.remove('light');
@@ -410,88 +447,89 @@ export default function App() {
         document.body.classList.add('light');
       }
 
-      const storedPreset = localStorage.getItem(S_PRESET);
+      const storedPreset = safeGetItem(S_PRESET);
       if (storedPreset) setCurrentPresetId(storedPreset);
 
-      const storedCustomColors = localStorage.getItem(S_CUSTOM_COLORS);
+      const storedCustomColors = safeGetItem(S_CUSTOM_COLORS);
       if (storedCustomColors) setCustomColors(JSON.parse(storedCustomColors));
 
       // Global app and PDF settings hydration
-      const storedAppLang = localStorage.getItem('marka_app_lang');
+      const storedAppLang = safeGetItem('marka_app_lang');
       if (storedAppLang === 'fr' || storedAppLang === 'ar') setAppLang(storedAppLang);
 
-      const storedPdfLang = localStorage.getItem('marka_pdf_lang');
+      const storedPdfLang = safeGetItem('marka_pdf_lang');
       if (storedPdfLang === 'fr' || storedPdfLang === 'ar') setPdfLang(storedPdfLang);
 
-      const sLogo = localStorage.getItem('marka_pdf_show_logo');
+      const sLogo = safeGetItem('marka_pdf_show_logo');
       if (sLogo !== null) setPdfShowLogo(sLogo === 'true');
 
-      const sCli = localStorage.getItem('marka_pdf_show_client');
+      const sCli = safeGetItem('marka_pdf_show_client');
       if (sCli !== null) setPdfShowClient(sCli === 'true');
 
-      const sDet = localStorage.getItem('marka_pdf_show_item_details');
+      const sDet = safeGetItem('marka_pdf_show_item_details');
       if (sDet !== null) setPdfShowItemDetails(sDet === 'true');
 
-      const sPrices = localStorage.getItem('marka_pdf_show_item_prices');
+      const sPrices = safeGetItem('marka_pdf_show_item_prices');
       if (sPrices !== null) setPdfShowItemPrices(sPrices === 'true');
 
-      const sBkdn = localStorage.getItem('marka_pdf_show_breakdown');
+      const sBkdn = safeGetItem('marka_pdf_show_breakdown');
       if (sBkdn !== null) setPdfShowBreakdown(sBkdn === 'true');
 
-      const sTfq = localStorage.getItem('marka_pdf_show_tafqeet');
+      const sTfq = safeGetItem('marka_pdf_show_tafqeet');
       if (sTfq !== null) setPdfShowTafqeet(sTfq === 'true');
 
-      const sNote = localStorage.getItem('marka_pdf_show_notes');
+      const sNote = safeGetItem('marka_pdf_show_notes');
       if (sNote !== null) setPdfShowNotes(sNote === 'true');
     } catch (e) {
       console.error('Failed reading localStorage on startup:', e);
+      logError('النظام عند بدء التشغيل', 'فشل في تحميل الإعدادات والبيانات من الذاكرة المحلية.', e);
     }
   }, []);
 
   // Sync settings mutations to localStorage
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_app_lang', appLang);
+    safeSetItem('marka_app_lang', appLang);
   }, [appLang]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_lang', pdfLang);
+    safeSetItem('marka_pdf_lang', pdfLang);
   }, [pdfLang]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_logo', String(pdfShowLogo));
+    safeSetItem('marka_pdf_show_logo', String(pdfShowLogo));
   }, [pdfShowLogo]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_client', String(pdfShowClient));
+    safeSetItem('marka_pdf_show_client', String(pdfShowClient));
   }, [pdfShowClient]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_item_details', String(pdfShowItemDetails));
+    safeSetItem('marka_pdf_show_item_details', String(pdfShowItemDetails));
   }, [pdfShowItemDetails]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_item_prices', String(pdfShowItemPrices));
+    safeSetItem('marka_pdf_show_item_prices', String(pdfShowItemPrices));
   }, [pdfShowItemPrices]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_breakdown', String(pdfShowBreakdown));
+    safeSetItem('marka_pdf_show_breakdown', String(pdfShowBreakdown));
   }, [pdfShowBreakdown]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_tafqeet', String(pdfShowTafqeet));
+    safeSetItem('marka_pdf_show_tafqeet', String(pdfShowTafqeet));
   }, [pdfShowTafqeet]);
 
   useEffect(() => {
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem('marka_pdf_show_notes', String(pdfShowNotes));
+    safeSetItem('marka_pdf_show_notes', String(pdfShowNotes));
   }, [pdfShowNotes]);
 
   // Dynamic CSS variables applying helper
@@ -553,26 +591,26 @@ export default function App() {
   const updateProjects = (updated: Project[]) => {
     setProjects(updated);
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem(S_PROJ, JSON.stringify(updated));
+    safeSetItem(S_PROJ, JSON.stringify(updated));
   };
 
   const updateClients = (updated: Client[]) => {
     setClients(updated);
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem(S_CLI, JSON.stringify(updated));
+    safeSetItem(S_CLI, JSON.stringify(updated));
   };
 
   const handleSaveCalcState = (state: CalcState) => {
     setCalcState(state);
     if ((window as any).isClearingDatabase) return;
-    localStorage.setItem(S_CALC, JSON.stringify(state));
+    safeSetItem(S_CALC, JSON.stringify(state));
   };
 
   // Toggle Dark/Light Mode
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
-    localStorage.setItem(S_THEME, nextTheme);
+    safeSetItem(S_THEME, nextTheme);
     if (nextTheme === 'light') {
       document.body.classList.add('light');
     } else {
@@ -588,14 +626,14 @@ export default function App() {
     reader.onload = (event) => {
       const res = event.target?.result as string;
       setUserLogo(res);
-      localStorage.setItem(S_LOGO, res);
+      safeSetItem(S_LOGO, res);
     };
     reader.readAsDataURL(file);
   };
 
   const removeUserLogo = () => {
     setUserLogo(null);
-    localStorage.removeItem(S_LOGO);
+    safeRemoveItem(S_LOGO);
   };
 
   // ----- Global Settings Handlers & Tools -----
@@ -643,27 +681,58 @@ export default function App() {
         const data = JSON.parse(event.target?.result as string);
         if (data.projects) {
           setProjects(data.projects);
-          localStorage.setItem(S_PROJ, JSON.stringify(data.projects));
+          safeSetItem(S_PROJ, JSON.stringify(data.projects));
         }
         if (data.clients) {
           setClients(data.clients);
-          localStorage.setItem(S_CLI, JSON.stringify(data.clients));
+          safeSetItem(S_CLI, JSON.stringify(data.clients));
         }
         if (data.calcState) {
           setCalcState(data.calcState);
-          localStorage.setItem(S_CALC, JSON.stringify(data.calcState));
+          safeSetItem(S_CALC, JSON.stringify(data.calcState));
         }
         if (data.userLogo) {
           setUserLogo(data.userLogo);
-          localStorage.setItem(S_LOGO, data.userLogo);
+          safeSetItem(S_LOGO, data.userLogo);
         }
-        if (data.appLang) setAppLang(data.appLang);
-        if (data.pdfLang) setPdfLang(data.pdfLang);
+        if (data.appLang) {
+          setAppLang(data.appLang);
+          safeSetItem('marka_app_lang', data.appLang);
+        }
+        if (data.pdfLang) {
+          setPdfLang(data.pdfLang);
+          safeSetItem('marka_pdf_lang', data.pdfLang);
+        }
+        if (data.theme) {
+          setTheme(data.theme);
+          safeSetItem(S_THEME, data.theme);
+          if (data.theme === 'dark') {
+            document.body.classList.remove('light');
+          } else {
+            document.body.classList.add('light');
+          }
+        }
+        if (data.currentPresetId) {
+          setCurrentPresetId(data.currentPresetId);
+          safeSetItem(S_PRESET, data.currentPresetId);
+        }
+        if (data.customColors) {
+          setCustomColors(data.customColors);
+          safeSetItem(S_CUSTOM_COLORS, JSON.stringify(data.customColors));
+        }
+        if (data.pdfShowLogo !== undefined) setPdfShowLogo(data.pdfShowLogo);
+        if (data.pdfShowClient !== undefined) setPdfShowClient(data.pdfShowClient);
+        if (data.pdfShowItemDetails !== undefined) setPdfShowItemDetails(data.pdfShowItemDetails);
+        if (data.pdfShowItemPrices !== undefined) setPdfShowItemPrices(data.pdfShowItemPrices);
+        if (data.pdfShowBreakdown !== undefined) setPdfShowBreakdown(data.pdfShowBreakdown);
+        if (data.pdfShowTafqeet !== undefined) setPdfShowTafqeet(data.pdfShowTafqeet);
+        if (data.pdfShowNotes !== undefined) setPdfShowNotes(data.pdfShowNotes);
         
-        safeAlert('🎉 تم استيراد النسخة الاحتياطية وتحديث قواعد البيانات بنجاح تام!');
+        safeAlert('🎉 تم استيراد النسخة الاحتياطية واستعادة جميع الإعدادات وقواعد البيانات بنجاح تام!');
         setIsSettingsModalOpen(false);
-      } catch (err) {
+      } catch (err: any) {
         safeAlert('❌ خطأ في قراءة ملف التكوين. الرجاء التأكد من صحة الملف وصيغة JSON الخاصة بالنظام.');
+        logError('استيراد النسخة الاحتياطية', 'فشل في تحليل ملف النسخ الاحتياطي.', err);
       }
     };
     reader.readAsText(file);
@@ -672,9 +741,9 @@ export default function App() {
   const handleSeedDemoData = () => {
     if (safeConfirm('ملاحظة: تفعيل خيار البيانات التجريبية سيضيف 4 مشاريع كبرى و4 عملاء مسجلين لمحاكاة النظام بالكامل. هل تود الاستمرار؟', true)) {
       setProjects(DEMO_PROJECTS);
-      localStorage.setItem(S_PROJ, JSON.stringify(DEMO_PROJECTS));
+      safeSetItem(S_PROJ, JSON.stringify(DEMO_PROJECTS));
       setClients(DEMO_CLIENTS);
-      localStorage.setItem(S_CLI, JSON.stringify(DEMO_CLIENTS));
+      safeSetItem(S_CLI, JSON.stringify(DEMO_CLIENTS));
       safeAlert('🎉 تم حقن وتوليد عينة البيانات التجريبية بنجاح! تصفح المؤشرات ولوحة القيادة لتجربة متميزة.');
       setIsSettingsModalOpen(false);
     }
@@ -684,7 +753,11 @@ export default function App() {
     if (safeConfirm('⚠️ تحذير شديد: أنت على وشك حذف جميع البيانات المسجلة، المشاريع، العملاء، وحاسبة التسعير بشكل نهائي لا يمكن الرجوع عنه! هل تريد الاستمرار بالفعل؟', false)) {
       if (safeConfirm('لتأكيد الحذف الكلي وتصفير المنصة، يرجى النقر على موافق.', false)) {
         (window as any).isClearingDatabase = true;
-        localStorage.clear();
+        try {
+          localStorage.clear();
+        } catch (e) {
+          console.error('Failed to clear localStorage:', e);
+        }
         setProjects([]);
         setClients([]);
         setUserLogo(null);
@@ -748,7 +821,19 @@ export default function App() {
   const saveProjectModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pFormName.trim()) {
-      safeAlert('الرجاء إدخال اسم المشروع أولاً.');
+      safeAlert('⚠️ الرجاء إدخال اسم المشروع أولاً.');
+      return;
+    }
+    if (!pFormClientId) {
+      safeAlert('⚠️ الرجاء اختيار عميل مرتبط بهذا المشروع. إذا لم يكن العميل مسجلاً، يرجى إضافته أولاً من قائمة العملاء.');
+      return;
+    }
+    if (!pFormStart) {
+      safeAlert('⚠️ الرجاء تحديد تاريخ بدء المشروع.');
+      return;
+    }
+    if (pFormPrice !== '' && (isNaN(Number(pFormPrice)) || Number(pFormPrice) < 0)) {
+      safeAlert('⚠️ يرجى إدخال قيمة ميزانية صالحة للمشروع (أكبر من أو تساوي 0).');
       return;
     }
 
@@ -807,7 +892,15 @@ export default function App() {
   const saveClientModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cFormName.trim()) {
-      safeAlert('الرجاء كتابة اسم العميل أولاً.');
+      safeAlert('⚠️ الرجاء كتابة اسم العميل أولاً.');
+      return;
+    }
+    if (cFormEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cFormEmail.trim())) {
+      safeAlert('⚠️ يرجى إدخال عنوان بريد إلكتروني صالح للعميل.');
+      return;
+    }
+    if (cFormPhone.trim() && /[a-zA-Z]/.test(cFormPhone.trim())) {
+      safeAlert('⚠️ يرجى التأكد من كتابة رقم هاتف صالح (لا يحتوي على أحرف أبجدية).');
       return;
     }
 
@@ -1923,10 +2016,89 @@ export default function App() {
                 </div>
               </div>
 
+              {/* SECTION E: System Diagnostics & Error Logs */}
+              <div className="space-y-3.5 pt-2 border-t border-zinc-900">
+                <div className="flex items-center justify-between border-b border-zinc-900/85 pb-2">
+                  <span className="text-xs font-bold text-zinc-200">📊 تشخيص صحة وموثوقية النظام وسجل الأخطاء</span>
+                  <span className="text-[9px] text-zinc-500 font-mono">النسخة v2.1.0</span>
+                </div>
+                
+                {/* Health grid */}
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-850 flex items-center justify-between">
+                    <span className="text-zinc-400">اتصال الإنترنت:</span>
+                    <span className="flex items-center gap-1 font-bold text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      نشط (Online)
+                    </span>
+                  </div>
+                  <div className="bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-850 flex items-center justify-between">
+                    <span className="text-zinc-400">حجم الذاكرة المحلية:</span>
+                    <span className="font-mono text-zinc-300 font-bold">
+                      {(() => {
+                        let totalBytes = 0;
+                        try {
+                          for (let key in localStorage) {
+                            if (localStorage.hasOwnProperty(key)) {
+                              totalBytes += (localStorage[key]?.length || 0) * 2;
+                            }
+                          }
+                        } catch (e) {}
+                        return (totalBytes / 1024).toFixed(2) + ' KB';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="bg-zinc-900/50 p-2.5 rounded-xl border border-zinc-850 flex items-center justify-between col-span-2">
+                    <span className="text-zinc-400">سلامة بنية قاعدة البيانات:</span>
+                    <span className="font-bold text-emerald-400">
+                      {Array.isArray(projects) && Array.isArray(clients) ? '✓ سليمة ومستقرة' : '✗ بها عطب'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Error logs collapse/accordion */}
+                <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-850">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-zinc-300">سجل أخطاء النظام ({errorLogs.length})</span>
+                    {errorLogs.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setErrorLogs([]);
+                          safeRemoveItem('marka_error_logs');
+                        }}
+                        className="text-[9px] text-rose-400 hover:underline cursor-pointer"
+                      >
+                        تفريغ السجل
+                      </button>
+                    )}
+                  </div>
+
+                  {errorLogs.length === 0 ? (
+                    <p className="text-[9px] text-zinc-500 text-center py-2">✓ لا توجد أي أخطاء مسجلة حالياً.</p>
+                  ) : (
+                    <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1 text-[9px] font-mono">
+                      {errorLogs.map((log) => (
+                        <div key={log.id} className="p-1.5 bg-zinc-900/50 rounded border border-rose-950/20 text-left text-zinc-300 space-y-1">
+                          <div className="flex items-center justify-between text-zinc-500 font-sans font-bold">
+                            <span>{log.source}</span>
+                            <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                          <p className="font-sans text-rose-400 font-semibold">{log.message}</p>
+                          {log.details && (
+                            <pre className="p-1 bg-zinc-950 text-zinc-500 rounded text-[8px] overflow-x-auto whitespace-pre-wrap leading-tight">{log.details}</pre>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end px-6 py-4.5 bg-zinc-900/40 border-t border-zinc-850">
+            <div className="flex justify-end px-6 py-4.5 bg-zinc-900/40 border-t border-brand-surface-2">
               <button
                 type="button"
                 onClick={() => setIsSettingsModalOpen(false)}
