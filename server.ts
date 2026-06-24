@@ -13,7 +13,7 @@ dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -30,6 +30,12 @@ async function startServer() {
       const { prompt } = req.body;
       if (!prompt) {
         return res.status(400).json({ error: 'الرجاء إدخال تفاصيل المشروع لتوليد الاقتراح.' });
+      }
+
+      if (prompt.length > 3000) {
+        return res.status(400).json({ 
+          error: '⚠️ عذراً، النص المُدخل طويل جداً (يتجاوز 3000 حرف). يرجى اختصار المتطلبات لحماية سرعة وأداء استجابة الذكاء الاصطناعي.' 
+        });
       }
 
       const ai = new GoogleGenAI({ apiKey });
@@ -164,6 +170,12 @@ ${clientsText || 'لا يوجد عملاء مسجلون بعد في المنصة
   ],
   "summary": "توليفة عامة وملخص إرشادي مكثف يلهم المصمم لتطبيق الخطوة الأولى غداً لزيادة كفاءة مشاريعه الفردية والمؤسساتية."
 }`;
+
+      if (prompt.length > 3000) {
+        return res.status(400).json({
+          error: '⚠️ عذراً، حجم مشاريعك وعملائك يتعدى الحد الأقصى المسموح به للذكاء الاصطناعي (3000 حرف). يرجى تقليل المشاريع غير النشطة لتشغيل المستشار بفعالية.'
+        });
+      }
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',

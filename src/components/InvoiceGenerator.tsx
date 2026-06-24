@@ -35,12 +35,25 @@ interface InvoiceGeneratorProps {
   clients: Client[];
 }
 
+// Helper to generate a 100% unique invoice number with Timestamp + Random 4-digit Suffix
+const generateUniqueInvoiceNo = (projYear?: string, projShortId?: string) => {
+  const now = new Date();
+  const year = projYear || now.getFullYear().toString();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const prefix = projShortId ? `${year}-${projShortId}` : `${year}${month}${day}`;
+  
+  const timestamp = Date.now();
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit random number to prevent any race condition collisions
+  return `INV-${prefix}-${timestamp}-${randomSuffix}`;
+};
+
 export default function InvoiceGenerator({ projects, clients }: InvoiceGeneratorProps) {
   // Selection States
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   
   // Invoice Details
-  const [invoiceNumber, setInvoiceNumber] = useState<string>(`INV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Date.now().toString().slice(-4)}`);
+  const [invoiceNumber, setInvoiceNumber] = useState<string>(generateUniqueInvoiceNo());
   const [issueDate, setIssueDate] = useState<string>(new Date().toISOString().substring(0, 10));
   const [dueDate, setDueDate] = useState<string>('');
   
@@ -112,7 +125,7 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
       setDueDate(d.toISOString().substring(0, 10));
 
       // Generate localized invoice number with unique timestamp suffix
-      setInvoiceNumber(`INV-${proj.start?.split('-')[0] || new Date().getFullYear()}-${proj.id.substring(0, 4).toUpperCase()}-${Date.now().toString().slice(-4)}`);
+      setInvoiceNumber(generateUniqueInvoiceNo(proj.start?.split('-')[0], proj.id.substring(0, 4).toUpperCase()));
     }
   };
 
@@ -162,7 +175,7 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
   // Print invoice helper with validation
   const handlePrint = () => {
     if (!issuerName.trim()) {
-      safeAlert('⚠️ يرجى تعيين اسم المُنفذ/الاستوديو أولاً.');
+      safeAlert('⚠️ يرجى تعيين اسم المُنفذ/الاستوديو أولاً وبشكل صحيح.');
       return;
     }
     if (!clientName.trim()) {
@@ -182,6 +195,24 @@ export default function InvoiceGenerator({ projects, clients }: InvoiceGenerator
 
     if (dueDate && new Date(dueDate) < new Date(issueDate)) {
       safeAlert('⚠️ تنبيه: تاريخ استحقاق الفاتورة يقع قبل تاريخ الإصدار. يرجى مراجعة التواريخ.');
+      return;
+    }
+
+    if (issuerEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(issuerEmail.trim())) {
+      safeAlert('⚠️ البريد الإلكتروني الخاص بـ مُصدر الفاتورة غير صالح.');
+      return;
+    }
+    if (clientEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail.trim())) {
+      safeAlert('⚠️ البريد الإلكتروني الخاص بـ العميل غير صالح.');
+      return;
+    }
+
+    if (issuerPhone.trim() && !/^[+0-9\s\-()]{6,20}$/.test(issuerPhone.trim())) {
+      safeAlert('⚠️ يرجى إدخال رقم هاتف صالح لمُصدر الفاتورة (أرقام ورموز فقط).');
+      return;
+    }
+    if (clientPhone.trim() && !/^[+0-9\s\-()]{6,20}$/.test(clientPhone.trim())) {
+      safeAlert('⚠️ يرجى إدخال رقم هاتف صالح للعميل (أرقام ورموز فقط).');
       return;
     }
 

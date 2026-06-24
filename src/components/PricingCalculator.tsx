@@ -310,9 +310,27 @@ export default function PricingCalculator({
   };
 
   const updateItemField = (id: string, field: keyof DesignItem, val: any) => {
+    let sanitizedVal = val;
+    if (field === 'length' || field === 'width' || field === 'basePrice' || field === 'price') {
+      const parsed = parseFloat(String(val));
+      if (!isNaN(parsed) && parsed < 0) {
+        sanitizedVal = 0;
+      }
+    } else if (field === 'copies') {
+      const parsed = parseInt(String(val));
+      if (!isNaN(parsed) && parsed < 1) {
+        sanitizedVal = 1;
+      }
+    } else if (field === 'individualDiscount') {
+      const parsed = parseFloat(String(val));
+      if (!isNaN(parsed)) {
+        sanitizedVal = Math.max(0, Math.min(100, parsed));
+      }
+    }
+
     const updated = designs.map((d) => {
       if (d.id === id) {
-        return { ...d, [field]: val };
+        return { ...d, [field]: sanitizedVal };
       }
       return d;
     });
@@ -730,7 +748,25 @@ export default function PricingCalculator({
 
   // Hit the backend Express server side API route with prompt
   const callAIPricingHelper = async () => {
-    if (!aiPrompt.trim()) return;
+    const trimmedPrompt = aiPrompt.trim();
+    if (!trimmedPrompt) {
+      setAiError('⚠️ الرجاء كتابة متطلبات أو وصف المشروع أولاً.');
+      return;
+    }
+
+    if (trimmedPrompt.length > 3000) {
+      const errMsg = '⚠️ عذراً، يتجاوز نص المتطلبات الحد الأقصى المسموح به (3000 حرف). يرجى تقصير النص للمتابعة.';
+      setAiError(errMsg);
+      if ((window as any).logError) {
+        (window as any).logError(
+          'توليد تسعير الذكاء الاصطناعي',
+          `فشل تقديم الطلب بسبب تجاوز الحد الأقصى للحروف: ${trimmedPrompt.length} حرف.`,
+          `النص المرفوض يبدأ بـ: "${trimmedPrompt.substring(0, 100)}..."`
+        );
+      }
+      return;
+    }
+
     setAiLoading(true);
     setAiError('');
     setAiResult(null);
@@ -739,7 +775,7 @@ export default function PricingCalculator({
       const response = await fetch('/api/ai-suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: aiPrompt }),
+        body: JSON.stringify({ prompt: trimmedPrompt }),
       });
 
       const data = await response.json();
@@ -749,7 +785,15 @@ export default function PricingCalculator({
       setAiResult(data);
     } catch (err: any) {
       console.error(err);
-      setAiError(err.message || 'فشلت معالجة الطلب، تأكد من إعداد مفتاح API الخاص بالخادم.');
+      const msg = err.message || 'فشلت معالجة الطلب، تأكد من إعداد مفتاح API الخاص بالخادم.';
+      setAiError(msg);
+      if ((window as any).logError) {
+        (window as any).logError(
+          'توليد تسعير الذكاء الاصطناعي',
+          `فشل طلب اقتراح الذكاء الاصطناعي لمتطلبات: "${trimmedPrompt.substring(0, 40)}..."`,
+          err
+        );
+      }
     } finally {
       setAiLoading(false);
     }

@@ -60,7 +60,15 @@ export default function AIEarningsAdvisor({ projects, clients }: AIEarningsAdvis
       setAdvice(data);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'حدث خطأ غير متوقع أثناء تحميل البيانات.');
+      const errMsg = err.message || 'حدث خطأ غير متوقع أثناء تحميل البيانات.';
+      setError(errMsg);
+      if ((window as any).logError) {
+        (window as any).logError(
+          'مستشار الأرباح الذكي (AI Advisor)',
+          `فشل في توليد التحليل التلقائي للأرباح بسبب خطأ في الخادم أو الشبكة.`,
+          err
+        );
+      }
     } finally {
       setLoading(false);
     }

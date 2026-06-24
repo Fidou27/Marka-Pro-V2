@@ -821,7 +821,7 @@ export default function App() {
   const saveProjectModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pFormName.trim()) {
-      safeAlert('⚠️ الرجاء إدخال اسم المشروع أولاً.');
+      safeAlert('⚠️ الرجاء إدخال اسم المشروع أولاً وبشكل صحيح (لا يمكن ترك الحقل فارغاً أو مسافات فقط).');
       return;
     }
     if (!pFormClientId) {
@@ -832,8 +832,15 @@ export default function App() {
       safeAlert('⚠️ الرجاء تحديد تاريخ بدء المشروع.');
       return;
     }
-    if (pFormPrice !== '' && (isNaN(Number(pFormPrice)) || Number(pFormPrice) < 0)) {
-      safeAlert('⚠️ يرجى إدخال قيمة ميزانية صالحة للمشروع (أكبر من أو تساوي 0).');
+    
+    const parsedPrice = Number(pFormPrice);
+    if (pFormPrice !== '' && (isNaN(parsedPrice) || parsedPrice < 0)) {
+      safeAlert('⚠️ يرجى إدخال قيمة ميزانية صالحة للمشروع (يجب أن تكون قيمة عددية موجبة أكبر من أو تساوي 0).');
+      return;
+    }
+
+    if (pFormDeadline && pFormStart && new Date(pFormDeadline) < new Date(pFormStart)) {
+      safeAlert('⚠️ تنبيه: تاريخ التسليم المتوقع لا يمكن أن يكون قبل تاريخ بدء المشروع فلكياً.');
       return;
     }
 
@@ -892,15 +899,15 @@ export default function App() {
   const saveClientModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cFormName.trim()) {
-      safeAlert('⚠️ الرجاء كتابة اسم العميل أولاً.');
+      safeAlert('⚠️ الرجاء كتابة اسم العميل أولاً وبشكل صحيح (لا يمكن ترك الاسم فارغاً أو مسافات فقط).');
       return;
     }
     if (cFormEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cFormEmail.trim())) {
-      safeAlert('⚠️ يرجى إدخال عنوان بريد إلكتروني صالح للعميل.');
+      safeAlert('⚠️ يرجى إدخال عنوان بريد إلكتروني صالح للعميل (مثال: client@domain.com).');
       return;
     }
-    if (cFormPhone.trim() && /[a-zA-Z]/.test(cFormPhone.trim())) {
-      safeAlert('⚠️ يرجى التأكد من كتابة رقم هاتف صالح (لا يحتوي على أحرف أبجدية).');
+    if (cFormPhone.trim() && !/^[+0-9\s\-()]{6,20}$/.test(cFormPhone.trim())) {
+      safeAlert('⚠️ يرجى التأكد من كتابة رقم هاتف صالح للعميل (أرقام ورموز مثل + أو مسافات فقط، وبطول يتراوح من 6 إلى 20 رقماً).');
       return;
     }
 
